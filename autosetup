@@ -1,0 +1,169 @@
+#!/bin/bash
+
+BAR_WIDTH=30
+TOTAL_STEPS=60
+STEP=0
+ESC="\033"
+RST="${ESC}[0m"
+C_HDR="${ESC}[93m"
+C_TXT="${ESC}[97m"
+C_DIM="${ESC}[90m"
+C_BAR="${ESC}[96m"
+C_FILL="${ESC}[92m"
+C_RED="${ESC}[91m"
+C_CYAN="${ESC}[36m"
+C_ORN="${ESC}[38;5;202m"
+
+print_ui() {
+  PCT=$((STEP * 100 / TOTAL_STEPS))
+  [ $PCT -lt 0 ] && PCT=0
+  [ $PCT -gt 100 ] && PCT=100
+
+  FILLED=$((BAR_WIDTH * STEP / TOTAL_STEPS))
+  [ $FILLED -lt 0 ] && FILLED=0
+  [ $FILLED -gt $BAR_WIDTH ] && FILLED=$BAR_WIDTH
+
+  BAR=""
+  for ((i=1;i<=BAR_WIDTH;i++)); do
+    if [ $i -le $FILLED ]; then
+      BAR="${BAR}█"
+    else
+      BAR="${BAR}░"
+    fi
+  done
+
+  clear
+  echo -e "${C_HDR}╔════════════════════════════════════════════════════╗${RST}"
+  echo -e "${C_HDR}║${RST}              ${C_ORN}**CÀI ĐẶT TV XIAOMI**${RST}                 ${C_HDR}║${RST}"
+  echo -e "${C_HDR}║${RST}       ${C_BAR}KHÁNH IT XIAOMI PRO CÀI APP TỰ DỘNG${RST}             ${C_HDR}║${RST}"
+  echo -e "${C_HDR}╟────────────────────────────────────────────────────╢${RST}"
+  echo -e "  ${C_BAR}[ ${C_FILL}${BAR}${RST}${C_BAR} ] ${C_TXT}${PCT}%${RST} ${C_DIM}(Bước ${STEP}/${TOTAL_STEPS})${RST}"
+  echo -e "${C_HDR}╚════════════════════════════════════════════════════╝${RST}"
+  echo ""
+  echo -e "${C_CYAN} Báo lỗi vui lòng liên hệ:${RST} ${C_ORN}0967.341.608${RST}"
+  echo ""
+}
+
+tick() {
+  STEP=$((STEP+1))
+  [ $STEP -gt $TOTAL_STEPS ] && STEP=$TOTAL_STEPS
+  print_ui
+}
+while true; do
+  STEP=0
+  clear
+  echo -e "${C_HDR}╔═══════════════════════════════════════════════════╗${RST}"
+  echo -e "${C_HDR}║${RST}      ${C_ORN}        **CÀI ĐẶT TV XIAOMI**${RST}                ${C_HDR}║${RST}"
+  echo -e "${C_HDR}║${RST}          ${C_BAR}  KHÁNH IT XIAOMI PRO - 0967.341.608${RST}            ${C_HDR}║${RST}"
+  echo -e "${C_HDR}╚═══════════════════════════════════════════════════╝${RST}"
+  echo ""
+
+  read -p "$(echo -e "${C_CYAN}➤ Nhập IPv4 của thiết bị: ${RST}")" IP
+
+
+  if [ -z "$IP" ]; then
+    echo -e "\n${C_RED}[!] Hết thời gian chờ hoặc sai địa chỉ IP...${RST}"
+    sleep 2
+    continue
+  fi
+
+  IP=$(echo "$IP" | xargs)
+
+  adb kill-server >/dev/null 2>&1
+  adb start-server >/dev/null 2>&1
+  echo -e "${C_DIM}Đang kết nối đến $IP...${RST}"
+  adb connect "$IP:5555" >/dev/null 2>&1
+
+  CONNECTED=false
+  for i in $(seq 1 15); do
+      if adb get-state 1>/dev/null 2>&1; then
+          CONNECTED=true
+          break
+      fi
+      sleep 1
+  done
+
+  if [ "$CONNECTED" = false ]; then
+      echo -e "${C_RED}[!] Thất bại: Không thể kết nối tới $IP.${RST}"
+      echo -e "${C_ORN}    Vui lòng kiểm tra lại địa chỉ IP hoặc cổng mạng 5555 trên TV.${RST}"
+      sleep 3
+      continue
+  fi
+
+  MAN=$(adb shell getprop ro.product.manufacturer | tr -d '\r')
+  MOD=$(adb shell getprop ro.product.model | tr -d '\r')
+  COD=$(adb shell getprop ro.product.name | tr -d '\r')
+  SER=$(adb shell getprop ro.serialno | tr -d '\r')
+  BUI=$(adb shell getprop ro.build.display.id | tr -d '\r')
+  SEC=$(adb shell getprop ro.build.version.security_patch | tr -d '\r')
+  AND=$(adb shell getprop ro.build.version.release | tr -d '\r')
+  SDK=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+
+  clear
+  echo -e "${C_HDR}╔═════════════════════════════════════════════╗${RST}"
+  echo -e "${C_HDR}║${C_ORN}      THÔNG TIN THIẾT BỊ ĐANG KẾT NỐI        ${C_HDR}║${RST}"
+  echo -e "${C_HDR}╚═════════════════════════════════════════════╝${RST}"
+  echo ""
+  echo -e "Hãng sản xuất : ${C_FILL}$MAN${RST}"
+  echo -e "Model         : ${C_FILL}$MOD${RST}"
+  echo -e "Code          : ${C_FILL}$COD${RST}"
+  echo -e "Serial        : ${C_FILL}$SER${RST}"
+  echo -e "Build         : ${C_FILL}$BUI${RST}"
+  echo -e "Security      : ${C_FILL}$SEC${RST}"
+  echo ""
+  echo -e "Android       : ${C_ORN}$AND (SDK $SDK)${RST}"
+  echo -e "--------------------------------------------------"
+  TOTAL_STEPS=60
+
+  printf "${C_RED}➤ Nhấn Enter để bắt đầu cài đặt...${RST}"
+  read -r
+  tick
+
+  for apk in \
+  ytb.apk \
+  mstore.apk \
+  quantv.apk \
+  ferrari.apk \
+  getout.apk \
+  mivtv.apk \
+  phim4k.apk
+  do
+      adb install -g "$apk" >/dev/null 2>&1
+      sleep 0.2
+      tick
+  done
+
+  echo -e "${C_ORN} 🚀 Đang tối ưu hóa ứng dụng (Vui lòng chờ giây lát)...${RST}"
+  echo -e "${C_DIM} ⏳ Đồng bộ hệ thống...${RST}"
+  sleep 8
+  echo -e "${C_RED} 🔄 Đang khởi động lại thiết bị...${RST}"
+  adb disconnect >/dev/null 2>&1
+  sleep 2
+  adb kill-server >/dev/null 2>&1
+
+  # Hoàn thành lấp đầy thanh trạng thái tiến trình
+  STEP=$TOTAL_STEPS
+  print_ui
+
+  echo -e "\n${C_FILL}✅ CÀI ĐẶT HOÀN TẤT!${RST}"
+  echo -e "------------------------------------------------------"
+  echo -e "${C_CYAN} 1.${RST} Cài đặt thiết bị mới"
+  echo -e "${C_CYAN} 2.${RST} Thoát cài đặt"
+  echo -e "------------------------------------------------------"
+
+  echo -n -e "${C_ORN}➤ Lựa chọn của bạn: ${RST}"
+  read -t 60 -n 1 OPTION
+  echo ""
+
+  if [ -z "$OPTION" ]; then
+      echo -e "${C_RED}[!] Không có phản hồi. Đang tự động đóng hệ thống...${RST}"
+      break
+  elif [ "$OPTION" = "1" ]; then
+      echo -e "${C_FILL}Đang khởi tạo lại...${RST}"
+      sleep 1
+      continue
+  else
+      echo -e "${C_RED}Đang thoát...${RST}"
+      break
+  fi
+done
